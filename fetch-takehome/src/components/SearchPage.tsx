@@ -21,6 +21,7 @@ const SearchPage = () => {
   const [nextParams, setNextParams] = useState<string>("")
   const [prevParams, setPrevParams] = useState<string>("")
   const [sortChoice, setSortChoice] = useState<string>("")
+  const [total, setTotal] = useState<number>(0)
 
   // const sortDogsAsc = (a: Dog, b: Dog) => {
   //   return a.name.localeCompare(b.name)
@@ -46,6 +47,14 @@ const SearchPage = () => {
   // useEffect(() => {
   //   console.log("filteredDogs", filteredDogs)
   // }, [filteredDogs])
+
+  // console.log('total', Math.ceil(total/25))
+  const totalPages = Math.ceil(total / 25)
+
+  useEffect(() => {
+    console.log('currentPage', currentPage)
+    console.log("totalPages", totalPages)
+  }, [totalPages, currentPage])
 
   const handleChoiceSelection = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (e.target.value === "asc") {
@@ -224,6 +233,7 @@ const SearchPage = () => {
       )
       if (response.status) {
         console.log("response.data", response.data)
+        setTotal(response.data.total)
         setNextParams(response.data.next)
         fetchDogObjects(response.data.resultIds)
       }
@@ -289,7 +299,7 @@ const SearchPage = () => {
             fetchPrevPage(currentPage)
             // handleNextPage()
           }}
-          disabled={currentPage<=0}
+          disabled={currentPage <= 0}
         >
           Prev Page
         </button>
@@ -299,7 +309,7 @@ const SearchPage = () => {
             fetchNextPage(currentPage)
             // handleNextPage()
           }}
-          
+          disabled={currentPage >= totalPages-1}
         >
           Next page
         </button>
