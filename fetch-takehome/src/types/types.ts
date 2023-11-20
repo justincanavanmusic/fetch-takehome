@@ -32,3 +32,11 @@ export type DogSearch = {
     sort?: string
 }
 
+export type DogLocationSearch = {
+   city?: string
+   states?: string[] 
+}
+
+export interface Match {
+    match: string
+}
