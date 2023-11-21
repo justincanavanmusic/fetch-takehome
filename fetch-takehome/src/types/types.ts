@@ -28,13 +28,14 @@ export type DogSearch = {
     ageMin?: number | string,
     ageMax?: number | string,
     size?: number
-    from?: string
+    from?: number
     sort?: string
 }
 
 export type DogLocationSearch = {
    city?: string
    states?: string[] 
+   size?: number
 }
 
 export interface Match {

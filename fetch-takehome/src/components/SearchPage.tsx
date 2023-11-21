@@ -1,12 +1,17 @@
 import axios from "axios"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useContext } from "react"
+
 import type {
   DogSearch,
   Dog,
-  // DogLocationSearch,
+  DogLocationSearch,
   Location,
 } from "../types/types"
-// import { fiftyStates } from "../fiftyStates"
+import LogOut from "./Logout"
+import { GlobalContext } from "../App"
+
+// import { logout } from "../queries/Logout"
+import { fiftyStates } from "../fiftyStates"
 
 const SearchPage = () => {
   const [breedSearch, setBreedSearch] = useState<string>("")
@@ -30,8 +35,8 @@ const SearchPage = () => {
   )
   // const [searchByLocation, setSearchByLocation] = useState<boolean>(false)
   // const [searchBy, setSearchBy] = useState<string>("Search by location")
-  // const [citySearch, setCitySearch] = useState<string>("")
-  // const [stateSearch, setStateSearch] = useState<string>("")
+  const [citySearch, setCitySearch] = useState<string>("")
+  const [stateSearch, setStateSearch] = useState<string>("")
   const [locationArr, setLocationArr] = useState<Location[]>([
     {
       zip_code: "",
@@ -51,9 +56,19 @@ const SearchPage = () => {
     // console.log("filteredDogs", filteredDogs)
     // console.log("matchedDog", matchedDog)
     console.log("favoriteDogs", favoriteDogs)
-    console.log('matchLocationData', matchedLocationData)
+    console.log("matchLocationData", matchedLocationData)
+    console.log("citySearch", citySearch)
+    console.log("zipSearch", zipSearch)
     // console.log("zipCodeArr", zipCodeArr)
-  }, [filteredDogs, favoriteDogs, matchedDog, zipCodeArr, matchedLocationData])
+  }, [
+    filteredDogs,
+    favoriteDogs,
+    matchedDog,
+    zipCodeArr,
+    matchedLocationData,
+    citySearch,
+    zipSearch,
+  ])
 
   let zipCodes: string[] = []
   let favZipCodes: string[] = []
@@ -96,15 +111,21 @@ const SearchPage = () => {
   }
 
   useEffect(() => {
-    handleLocationData()
+    if (zipCodeArr) {
+      handleLocationData()
+    }
   }, [zipCodeArr])
 
   useEffect(() => {
-    handleFavLocationData()
+    if (favZipCodeArr) {
+      handleFavLocationData()
+    }
   }, [favZipCodeArr])
 
   useEffect(() => {
-    handleMatchedLocationData()
+    if (matchedZipCode) {
+      handleMatchedLocationData()
+    }
   }, [matchedZipCode])
 
   const handleChoiceSelection = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -196,6 +217,18 @@ const SearchPage = () => {
   }
 
   const fetchNextPage = async (page: number) => {
+    const params: DogSearch = {
+      size: 25,
+      from: page * 25,
+    }
+
+    // if (zipSearch) {
+    //   let zipCodes = await handleLocationData()
+    //   console.log('zipCodes', zipCodes)
+    //   params.zipCodes = zipCodes
+    // }
+    // console.log('nextParams', nextParams)
+
     try {
       const response = await axios.get(
         `https://frontend-take-home-service.fetch.com${nextParams}`,
@@ -204,17 +237,16 @@ const SearchPage = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          params: {
-            size: 25,
-            from: page * 25,
-          },
+          params,
         }
       )
+      console.log("response", response)
 
       if (response.status) {
         fetchDogObjects(response.data.resultIds)
 
         if (response.data.next) {
+          
           setNextParams(response.data.next)
         }
         if (response.data.prev) {
@@ -335,12 +367,27 @@ const SearchPage = () => {
     if (currentPage !== 0) {
       setCurrentPage(0)
     }
+
     const params: DogSearch = {}
+
+    if (citySearch || stateSearch) {
+      let filteredZips = await handleSearchByLocation()
+      // if (citySearch) {
+      //   setCitySearch("")
+      // }
+      // if (stateSearch) {
+      //   setStateSearch("")
+      // }
+      params.zipCodes = [filteredZips]
+      // console.log("filteredZips", filteredZips)
+      fetchLocations([filteredZips])
+    }
 
     if (breedSearch) {
       params.breeds = [breedSearch]
     }
     if (zipSearch) {
+      console.log("zipSearch", zipSearch)
       params.zipCodes = [zipSearch]
       fetchLocations([zipSearch])
     }
@@ -387,39 +434,49 @@ const SearchPage = () => {
     }
   }
 
-  // const handleSearchByLocation = async () => {
-  //   if (currentPage !== 0) {
-  //     setCurrentPage(0)
-  //   }
+  const handleSearchByLocation = async () => {
+    if (currentPage !== 0) {
+      setCurrentPage(0)
+    }
 
-  //   const params: DogLocationSearch = {}
+    const params: DogLocationSearch = {
+      size: 50,
+    }
 
-  //   if (citySearch) {
-  //     params.city = citySearch
-  //   }
-  //   if (stateSearch) {
-  //     params.states = [stateSearch]
-  //   }
+    if (citySearch) {
+      params.city = citySearch
+    }
+    if (stateSearch) {
+      params.states = [stateSearch]
+    }
 
-  //   try {
-  //     const locationResponse = await axios.post(
-  //       "https://frontend-take-home-service.fetch.com/locations/search",
-  //       params,
-  //       {
-  //         withCredentials: true,
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //         params,
-  //       }
-  //     )
-  //     console.log("locationResponse", locationResponse)
-  //     if (locationResponse.status) {
-  //     }
-  //   } catch (error) {
-  //     console.error("Error during location search!")
-  //   }
-  // }
+    try {
+      const locationResponse = await axios.post(
+        "https://frontend-take-home-service.fetch.com/locations/search", params,
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        
+        }
+      )
+
+      if (locationResponse.status) {
+        console.log("locationResponse", locationResponse)
+        let zipCodes = locationResponse.data.results.map(
+          (location: Location) => location.zip_code
+        )
+        // setZipCodeArr(zipCodes)
+        // console.log('zipCodes', zipCodes)
+
+        setZipSearch(zipCodes)
+        return zipCodes
+      }
+    } catch (error) {
+      console.error("Error during location search!")
+    }
+  }
 
   const fetchLocations = async (zipCodes: string[]) => {
     try {
@@ -458,6 +515,8 @@ const SearchPage = () => {
       {/* <button onClick={handleSearchBy}>{searchBy}</button>
       {!searchByLocation ? ( */}
       <h1 className="text-center">Search for Dogs!</h1>
+      <LogOut />
+
       <>
         <div className="flex justify-center flex-wrap gap-2">
           <input
@@ -568,52 +627,33 @@ const SearchPage = () => {
         </div>
       )}
 
-      {/* : (
-        <>
-          <input
-            type="text"
-            placeholder="City"
-            value={citySearch}
-            onChange={(e) => setCitySearch(e.target.value)}
-          />
-          <select
-            placeholder="State"
-            value={stateSearch}
-            onChange={(e) => setStateSearch(e.target.value)}
-          >
-            {fiftyStates.map((state) => (
-              <option key={state} value={state}>
-                {state}
-              </option>
-            ))}
-          </select>
-          <input
-            type="text"
-            placeholder="Min Age"
-            value={ageMin}
-            onChange={(e) => setAgeMin(e.target.value)}
-          />
-          <button onClick={handleSearchByLocation}>Search</button>
-          {favoriteDogs.length > 0 && (
-            <button onClick={() => findDogMatch(favoriteDogs)}>
-              Find Your Match!
-            </button>
-          )}
-        </> */}
+      <div>
+        <input
+          type="text"
+          placeholder="City"
+          value={citySearch}
+          onChange={(e) => setCitySearch(e.target.value)}
+        />
+        <select
+          placeholder="State"
+          value={stateSearch}
+          onChange={(e) => setStateSearch(e.target.value)}
+        >
+          {fiftyStates.map((state) => (
+            <option key={state} value={state}>
+              {state}
+            </option>
+          ))}
+        </select>
+        {/* <input
+          type="text"
+          placeholder="Min Age"
+          value={ageMin}
+          onChange={(e) => setAgeMin(e.target.value)}
+        /> */}
+        {/* <button onClick={handleSearchByLocation}>Filter</button> */}
+      </div>
 
-      {/* {matchedDog.id && (
-        <div key={matchedDog.id} className="flex flex-col mt-6 w-[45%]">
-          <span>Name: {matchedDog.name}</span>
-          <span>Breed: {matchedDog.breed}</span>
-          <span>Age: {matchedDog.age}</span>
-     
-
-          <img
-            className="h-40 w-[7.5rem] object-cover"
-            src={matchedDog.img}
-          ></img>
-        </div>
-      )} */}
       {filteredDogs.length > 0 && (
         <div className="flex gap-4 justify-center flex-wrap">
           <h2 className="w-full text-center"> View All Dogs!</h2>
