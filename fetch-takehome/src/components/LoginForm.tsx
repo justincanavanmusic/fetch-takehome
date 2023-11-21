@@ -36,10 +36,12 @@ const LoginForm = () => {
   }
 
   return (
-    <div>
-      <h2>Login</h2>
+    <div className="flex flex-col items-center mt-8 min-h-screen">
+      <div className="w-[80%] border-2 border-black flex flex-col items-center xs:w-[400px]">
+      <h2 className="mb-4">Login</h2>
       <label>Name:</label>
       <input
+      className="border-2 border-black"
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -47,12 +49,16 @@ const LoginForm = () => {
       <br />
       <label>Email:</label>
       <input
+         className="border-2 border-black"
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
       <br />
-      <button onClick={handleLogin}>Login</button>
+      <button
+      className="border-2 px-1 mb-2 border-black"
+       onClick={handleLogin}>Submit</button>
+      </div>
     </div>
   )
 }
