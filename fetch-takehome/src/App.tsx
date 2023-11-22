@@ -4,20 +4,16 @@ import { Routes, Route, BrowserRouter as Router } from "react-router-dom"
 import { createContext, useState } from "react"
 export const GlobalContext = createContext({} as GlobalContextType)
 export type GlobalContextType = {
-  areYouLoggedIn: boolean
-  setAreYouLoggedIn: React.Dispatch<React.SetStateAction<boolean>>
+  // areYouLoggedIn: boolean
+  // setAreYouLoggedIn: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 function App() {
- 
 
-  const [areYouLoggedIn, setAreYouLoggedIn] = useState<boolean>(false)
-  console.log('areYouLoggedIn', areYouLoggedIn)
 
   return (
     <GlobalContext.Provider value={{
-      areYouLoggedIn,
-      setAreYouLoggedIn
+
     }}>
     <Router>
       <>

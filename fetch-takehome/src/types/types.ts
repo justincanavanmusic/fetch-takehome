@@ -36,6 +36,7 @@ export type DogLocationSearch = {
    city?: string
    states?: string[] 
    size?: number
+   from?: number
 }
 
 export interface Match {
