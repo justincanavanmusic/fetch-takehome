@@ -1,30 +1,35 @@
-# React + TypeScript + Vite
+# JCs Dog Adoption!
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+JC's Dog Adoption is an application where users can filter through a variety of dogs all over the United States and create a list of their favorite dogs. Our advanced matching algorithm then matches you with the perfect dog!
 
-Currently, two official plugins are available:
+## Getting Started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Follow these steps to check out JC's Dog Adoption on your local machine:
 
-## Expanding the ESLint configuration
+## Prerequisites
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+Before you start, make sure you have the following installed:
 
-- Configure the top-level `parserOptions` property like this:
+- [Node.js and npm](https://nodejs.org/)
+- [Vite](https://vitejs.dev/)
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
+## Installation
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+1. Clone the repo:
+
+  git clone https://github.com/justincanavanmusic/fetch-takehome.git
+
+2. Navigate to directory:
+ 
+  cd fetch-takehome
+
+3. Install Dependencies:
+
+  npm install
+
+4. Start Development server:
+
+  npm run dev
+
+## Usage
+Once the development server is running, open your browser and navigate to port specified in the console to explore JC's Dog Adoption!

@@ -1,17 +1,10 @@
 import axios from "axios"
-import { useEffect, useState, useContext } from "react"
+import { useEffect, useState } from "react"
 
-import type {
-  DogSearch,
-  Dog,
-  DogLocationSearch,
-  Location,
-} from "../types/types"
+import type { DogSearch, Dog, Location } from "../types/types"
 import LogOut from "./Logout"
-import { GlobalContext } from "../App"
 
-// import { logout } from "../queries/Logout"
-import { fiftyStates } from "../fiftyStates"
+//NOTE: there was a CORS issue when sending an array of multiple zip codes so I took out the location filtering as it was only working for the first page (25 dogs). Once I used the "next" end point I is when I receieved the CORS errors.
 
 const SearchPage = () => {
   const [breedSearch, setBreedSearch] = useState<string>("")
@@ -20,11 +13,10 @@ const SearchPage = () => {
   const [ageMax, setAgeMax] = useState<number | string>("")
   const [filteredDogs, setFilteredDogs] = useState<Dog[]>([])
   const [errorMessage, setErrorMessage] = useState<string>("")
-
+  const [sortChoice, setSortChoice] = useState<string>("asc")
   const [currentPage, setCurrentPage] = useState<number>(0)
   const [nextParams, setNextParams] = useState<string>("")
   const [prevParams, setPrevParams] = useState<string>("")
-  const [sortChoice, setSortChoice] = useState<string>("asc")
   const [total, setTotal] = useState<number>(0)
   const totalPages = Math.ceil(total / 25)
   const [favoriteDogs, setFavoriteDogs] = useState<string[]>([])
@@ -36,8 +28,8 @@ const SearchPage = () => {
   )
   // const [searchByLocation, setSearchByLocation] = useState<boolean>(false)
   // const [searchBy, setSearchBy] = useState<string>("Search by location")
-  const [citySearch, setCitySearch] = useState<string>("")
-  const [stateSearch, setStateSearch] = useState<string>("")
+  // const [citySearch, setCitySearch] = useState<string>("")
+  // const [stateSearch, setStateSearch] = useState<string>("")
   const [locationArr, setLocationArr] = useState<Location[]>([
     {
       zip_code: "",
@@ -52,24 +44,6 @@ const SearchPage = () => {
   const [zipCodeArr, setZipCodeArr] = useState<string[]>([])
   const [favZipCodeArr, setFavZipCodeArr] = useState<string[]>([])
   const [matchedZipCode, setMatchedZipCode] = useState<string>("")
-
-  useEffect(() => {
-    // console.log("filteredDogs", filteredDogs)
-    // console.log("matchedDog", matchedDog)
-    // console.log("favoriteDogs", favoriteDogs)
-    // console.log("matchLocationData", matchedLocationData)
-    // console.log("citySearch", citySearch)
-    // console.log("zipSearch", zipSearch)
-    console.log("zipCodeArr", zipCodeArr)
-  }, [
-    filteredDogs,
-    favoriteDogs,
-    matchedDog,
-    zipCodeArr,
-    matchedLocationData,
-    citySearch,
-    zipSearch,
-  ])
 
   let zipCodes: string[] = []
   let favZipCodes: string[] = []
@@ -89,26 +63,21 @@ const SearchPage = () => {
   }
 
   const getMatchedLocation = (dog: Dog) => {
-    // console.log("dog.zip", dog.zip_code)
-
     setMatchedZipCode(dog.zip_code)
   }
 
   const handleLocationData = async () => {
     let locations = await fetchLocations(zipCodeArr)
-    console.log("locations", locations)
     setLocationArr(locations)
   }
 
   const handleFavLocationData = async () => {
     let locations = await fetchLocations(favZipCodeArr)
-    // console.log("favLocations", locations)
     setFavLocationArr(locations)
   }
 
   const handleMatchedLocationData = async () => {
     let location = await fetchLocations([matchedZipCode])
-    console.log("location", location)
     setMatchedLocationData(location[0])
   }
 
@@ -218,20 +187,7 @@ const SearchPage = () => {
     // fetchFavoriteDogs()
   }
 
-  const fetchNextPage = async (page: number) => {
-    // const params: DogSearch = {
-    //   size: 3,
-    //   from: page * 25,
-    // }
-    // if (zipSearch) {
-    //   params.zipCodes = zipCodeArr
-    // }
-
-    // console.log('page', page)
-    // console.log('params', params)
-
-    console.log("nextParams", nextParams)
-
+  const fetchNextPage = async () => {
     try {
       const response = await axios.get(
         `https://frontend-take-home-service.fetch.com${nextParams}`,
@@ -260,7 +216,7 @@ const SearchPage = () => {
     }
   }
 
-  const fetchPrevPage = async (page: number) => {
+  const fetchPrevPage = async () => {
     try {
       const response = await axios.get(
         `https://frontend-take-home-service.fetch.com${prevParams}`,
@@ -268,10 +224,6 @@ const SearchPage = () => {
           withCredentials: true,
           headers: {
             "Content-Type": "application/json",
-          },
-          params: {
-            size: 25,
-            from: page * 25,
           },
         }
       )
@@ -306,7 +258,6 @@ const SearchPage = () => {
         "https://frontend-take-home-service.fetch.com/dogs",
 
         idsArr,
-        // ids,
         {
           withCredentials: true,
           headers: {
@@ -315,7 +266,6 @@ const SearchPage = () => {
         }
       )
       if (response.status) {
-        // console.log('response.data', response.data)
         setFilteredDogs(response.data)
         getLocations(response.data)
       }
@@ -371,8 +321,6 @@ const SearchPage = () => {
       setCurrentPage(0)
     }
 
-    // let filteredZips: string[] = await handleSearchByLocation()
-
     const params: DogSearch = {}
 
     if (breedSearch) {
@@ -401,6 +349,8 @@ const SearchPage = () => {
       params.sort = `breed:${sortChoice}`
     }
 
+    //there was a CORS issue when sending an array of multiple zip codes so I had to take this functionality out.
+
     // if (citySearch || stateSearch) {
     //   let filteredZips: string[] = await handleSearchByLocation()
 
@@ -411,8 +361,6 @@ const SearchPage = () => {
     //   await fetchLocations(filteredZips)
     //   // setZipCodeArr(filteredZips)
     // }
-
-    console.log("params", params)
 
     try {
       const response = await axios.get(
@@ -428,10 +376,8 @@ const SearchPage = () => {
       )
 
       if (response.status) {
-        console.log("response.data", response.data)
         setTotal(response.data.total)
         setNextParams(response.data.next)
-        console.log("response.data.next", response.data.next)
         fetchDogObjects(response.data.resultIds)
         if (response.data.total === 0) {
           setErrorMessage("No Dogs Found :(")
@@ -504,25 +450,12 @@ const SearchPage = () => {
         }
       )
       if (locationResponse.status) {
-        // handleLocationData(locationResponse.data)
-        console.log("locationResponse.status", locationResponse)
         return locationResponse.data
       }
     } catch (error) {
       console.error("Error fetching locations!", error)
     }
   }
-
-  // const handleSearchBy = () => {
-  //   setSearchByLocation(!searchByLocation)
-
-  //   if (searchByLocation) {
-  //     setSearchBy("Search by location")
-  //   }
-  //   if (!searchByLocation) {
-  //     setSearchBy("Search by dog")
-  //   }
-  // }
 
   return (
     <div className="flex flex-col gap-2 mt-4 ">
@@ -583,6 +516,7 @@ const SearchPage = () => {
             />
             <span className="w-full text-center">Sort By Breed:</span>
             <select
+              data-testid="sortChoiceSelect"
               className="w-36 border-2 border-black"
               onChange={(e) => handleChoiceSelection(e)}
             >
@@ -653,7 +587,6 @@ const SearchPage = () => {
                       <span>Name: {favDog.name}</span>
                       <span>Breed: {favDog.breed}</span>
                       <span>Age: {favDog.age}</span>
-                      {/* <span>Zip Code: {favDog.zip_code}</span> */}
                       {favLocationArr && favLocationArr[index] && (
                         <span>
                           {" "}
@@ -712,22 +645,22 @@ const SearchPage = () => {
               key={dog.id}
               className="flex justify-between flex-col mt-6 w-[45%] border-2 border-black items-center rounded-md"
             >
-              <div className='w-full flex flex-col md:flex-row justify-between'>
-              <div className="flex flex-col gap-1 xs:text-[1.2rem]  pl-2">
-                <span>Name: {dog.name}</span>
-                <span>Breed: {dog.breed}</span>
-                <span>Age: {dog.age}</span>
-                {locationArr && locationArr[index] && (
-                  <span>
-                    {" "}
-                    {`${locationArr[index].city}, ${locationArr[index].state}, ${locationArr[index].zip_code}`}
-                  </span>
-                )}
-              </div>
-              <img
-                className="mx-auto h-40 w-[7.5rem] xs:h-48 xs:w-36 sm:h-60 md:m-1 sm:w-[11.25rem] lg:h-72 lg:w-[13.5rem] rounded-md object-cover"
-                src={dog.img}
-              ></img>
+              <div className="w-full flex flex-col md:flex-row justify-between">
+                <div className="flex flex-col gap-1 xs:text-[1.2rem]  pl-2">
+                  <span>Name: {dog.name}</span>
+                  <span>Breed: {dog.breed}</span>
+                  <span>Age: {dog.age}</span>
+                  {locationArr && locationArr[index] && (
+                    <span>
+                      {" "}
+                      {`${locationArr[index].city}, ${locationArr[index].state}, ${locationArr[index].zip_code}`}
+                    </span>
+                  )}
+                </div>
+                <img
+                  className="mx-auto h-40 w-[7.5rem] xs:h-48 xs:w-36 sm:h-60 md:m-1 sm:w-[11.25rem] lg:h-72 lg:w-[13.5rem] rounded-md object-cover"
+                  src={dog.img}
+                ></img>
               </div>
               <div className="flex flex-col items-center gap-1 my-2 w-full">
                 <button
@@ -745,7 +678,7 @@ const SearchPage = () => {
               className="border-2 px-1 border-black"
               onClick={() => {
                 setCurrentPage(currentPage - 1)
-                fetchPrevPage(currentPage)
+                fetchPrevPage()
               }}
               disabled={currentPage <= 0}
             >
@@ -758,8 +691,7 @@ const SearchPage = () => {
               className="border-2 px-1 border-black"
               onClick={() => {
                 setCurrentPage(currentPage + 1)
-                // setCurrentPage(1)
-                fetchNextPage(currentPage)
+                fetchNextPage()
               }}
               disabled={currentPage >= totalPages - 1}
             >
