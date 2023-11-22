@@ -124,7 +124,6 @@ const SearchPage = () => {
         }
       )
       if (response.status) {
-        console.log("response.data", response.data)
         getFavLocations(response.data)
         return response.data
       }
