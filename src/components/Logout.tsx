@@ -1,13 +1,11 @@
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
-// import { useContext } from "react"
-// import { GlobalContext } from "../App"
+
 
 const LogOut = () => {
   const navigate = useNavigate()
   const handleLogout = async () => {
-    // const navigate = useNavigate()
-    // console.log('hello')
+
     try {
       const response = await axios.post(
         "https://frontend-take-home-service.fetch.com/auth/logout",

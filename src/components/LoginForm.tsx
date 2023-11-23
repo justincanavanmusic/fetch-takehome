@@ -1,4 +1,4 @@
-import { useContext, useState } from "react"
+import { useState } from "react"
 import axios from "axios"
 import { AxiosResponse } from "axios"
 import { useNavigate } from "react-router-dom"
@@ -44,8 +44,6 @@ const LoginForm = () => {
       )
 
       if (response.status) {
-        // console.log("response", response)
-        // console.log("Login successful!")
         navigate("/search")
       } else {
         console.error("Login failed")
