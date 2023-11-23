@@ -3,10 +3,11 @@ import { useEffect, useState } from "react"
 
 import type { DogSearch, Dog, Location } from "../types/types"
 import LogOut from "./Logout"
+import React from "react"
 
-//NOTE: there was a CORS issue when sending an array of multiple zip codes so I took out the location filtering as it was only working for the first page (25 dogs). Once I used the "next" end point I is when I receieved the CORS errors.
+//NOTE: there was a CORS issue when sending an array of multiple zip codes so I took out the location filtering as it was only working for the first page (25 dogs). Once I used the "next" end point that was supplied is when I receieved the CORS errors.
 
-const SearchPage = () => {
+const SearchPage: React.FC = () => {
   const [breedSearch, setBreedSearch] = useState<string>("")
   const [zipSearch, setZipSearch] = useState<string>("")
   const [ageMin, setAgeMin] = useState<number | string>("")
@@ -133,15 +134,12 @@ const SearchPage = () => {
   }
 
   const fetchFavoriteDogs = async () => {
-    // console.log("favoriteDogs", favoriteDogs)
     let dogObjs = await fetchFavDogObjects(favoriteDogs)
-    // console.log("dogObjs", dogObjs)
     setFavoriteDogObjects(dogObjs)
   }
 
   useEffect(() => {
     fetchFavoriteDogs()
-    // }
   }, [favoriteDogs])
 
   const fetchDogBreeds = async () => {
@@ -182,8 +180,6 @@ const SearchPage = () => {
     console.log("result", result)
 
     setFavoriteDogs(result)
-
-    // fetchFavoriteDogs()
   }
 
   const fetchNextPage = async () => {
@@ -458,8 +454,6 @@ const SearchPage = () => {
 
   return (
     <div className="flex flex-col gap-2 mt-4 ">
-      {/* <button onClick={handleSearchBy}>{searchBy}</button>
-      {!searchByLocation ? ( */}
       <div className="flex flex-col items-start">
         <h1 className="pl-4 text-[1.5rem]">Search for Dogs!</h1>
         <LogOut />
@@ -549,7 +543,6 @@ const SearchPage = () => {
               <span>Name: {matchedDog.name}</span>
               <span>Breed: {matchedDog.breed}</span>
               <span>Age: {matchedDog.age}</span>
-              {/* <span>Zip Code: {matchedDog.zip_code}</span> */}
               {matchedLocationData && (
                 <span>
                   {`${matchedLocationData.city}, ${matchedLocationData.state}, ${matchedLocationData.zip_code}`}
@@ -615,26 +608,6 @@ const SearchPage = () => {
         </div>
       )}
 
-      {/* <div>
-        <input
-          type="text"
-          placeholder="City"
-          value={citySearch}
-          onChange={(e) => setCitySearch(e.target.value)}
-        />
-        <select
-          placeholder="State"
-          value={stateSearch}
-          onChange={(e) => setStateSearch(e.target.value)}
-        >
-          {fiftyStates.map((state) => (
-            <option key={state} value={state}>
-              {state}
-            </option>
-          ))}
-        </select>
-      </div> */}
-
       {filteredDogs.length > 0 && (
         <div className="flex gap-4 justify-center flex-wrap">
           <h2 className="w-full text-center text-[1.5rem]"> View All Dogs!</h2>
@@ -671,7 +644,6 @@ const SearchPage = () => {
               </div>
             </div>
           ))}
-          {/* {filteredDogs.length>0 && ( */}
           <div className="w-full flex justify-evenly mb-2">
             <button
               className="border-2 px-1 border-black"
@@ -697,7 +669,6 @@ const SearchPage = () => {
               Next page
             </button>
           </div>
-          {/* )} */}
         </div>
       )}
     </div>
