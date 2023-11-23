@@ -525,7 +525,9 @@ const SearchPage: React.FC = () => {
                 Search
               </button>
             </div>
-            <hr className="w-[80%] mt-4 border-black "></hr>
+            {favoriteDogs.length === 0 && (
+              <hr className="w-[80%] mt-4 border-black "></hr>
+            )}
           </div>
         </>
       </div>
@@ -537,6 +539,7 @@ const SearchPage: React.FC = () => {
           key={matchedDog.id}
           className="flex flex-col items-center py-4 w-full"
         >
+          <hr className="w-[80%] mt-4 mb-2 border-black "></hr>
           <h1 className="text-[1.5rem] mb-4">Your Match!</h1>
           <div className="flex flex-col border-2 py-2 border-black items-center w-64 xs:w-[350px] sm:w-[500px] rounded-md xs:text-[1.2rem] sm:text-[1.5rem] sm:flex-row sm:justify-between sm:items-start px-2">
             <div className="flex flex-col">
@@ -559,7 +562,7 @@ const SearchPage: React.FC = () => {
       )}
       {favoriteDogObjects.length > 0 && (
         <div className="min-w-[300px] w-[95%] mx-auto flex flex-col pb-6 items-center">
-          <hr className="w-[80%] border-black"></hr>
+          <hr className="w-[80%] my-4 border-black"></hr>
           <h2 className="text-[1.5rem] mt-4">Your Favorite Dogs!</h2>
           <button
             className="border-2 my-2 px-4 mx-auto border-black"
