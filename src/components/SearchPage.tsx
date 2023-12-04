@@ -1,8 +1,17 @@
 import axios from "axios"
 import { useEffect, useState } from "react"
 
-import type { DogSearch, Dog, Location } from "../types/types"
+import type {
+  DogSearch,
+  Dog,
+  Location,
+  DogLocationSearch,
+} from "../types/types"
 import LogOut from "./Logout"
+import { fiftyStates } from "../fiftyStates"
+import { useFetch } from "../useFetch"
+import { apiHelper } from "./utils/apiHelper"
+import { AxiosResponse } from "axios"
 
 //NOTE: there was a CORS issue when sending an array of multiple zip codes so I took out the location filtering as it was only working for the first page (25 dogs). Once I used the "next" end point I is when I receieved the CORS errors.
 
@@ -19,7 +28,7 @@ const SearchPage = () => {
   const [prevParams, setPrevParams] = useState<string>("")
   const [total, setTotal] = useState<number>(0)
   const totalPages = Math.ceil(total / 25)
-  const [favoriteDogs, setFavoriteDogs] = useState<string[]>([])
+  const [favoriteDogsIds, setFavoriteDogsIds] = useState<string[]>([])
   const [favoriteDogObjects, setFavoriteDogObjects] = useState<Dog[]>([])
 
   const [matchedDog, setMatchedDog] = useState<Dog>({} as Dog)
@@ -28,8 +37,8 @@ const SearchPage = () => {
   )
   // const [searchByLocation, setSearchByLocation] = useState<boolean>(false)
   // const [searchBy, setSearchBy] = useState<string>("Search by location")
-  // const [citySearch, setCitySearch] = useState<string>("")
-  // const [stateSearch, setStateSearch] = useState<string>("")
+  const [citySearch, setCitySearch] = useState<string>("")
+  const [stateSearch, setStateSearch] = useState<string>("")
   const [locationArr, setLocationArr] = useState<Location[]>([
     {
       zip_code: "",
@@ -82,19 +91,24 @@ const SearchPage = () => {
   }
 
   useEffect(() => {
-    if (zipCodeArr) {
+    if (zipCodeArr.length > 0) {
+      // console.log("handleLocationData")
+      // console.log("zipCodeArr", zipCodeArr)
       handleLocationData()
     }
   }, [zipCodeArr])
 
   useEffect(() => {
-    if (favZipCodeArr) {
+    if (favZipCodeArr.length > 0) {
+      // console.log("handleFavLocationData")
+      // console.log("favZipCodeArr", favZipCodeArr)
       handleFavLocationData()
     }
   }, [favZipCodeArr])
 
   useEffect(() => {
-    if (matchedZipCode) {
+    if (matchedZipCode.length > 0) {
+      // console.log("handleMatchedLocationData")
       handleMatchedLocationData()
     }
   }, [matchedZipCode])
@@ -133,80 +147,82 @@ const SearchPage = () => {
   }
 
   const fetchFavoriteDogs = async () => {
-    // console.log("favoriteDogs", favoriteDogs)
-    let dogObjs = await fetchFavDogObjects(favoriteDogs)
-    // console.log("dogObjs", dogObjs)
+    let dogObjs = await fetchFavDogObjects(favoriteDogsIds)
     setFavoriteDogObjects(dogObjs)
   }
 
   useEffect(() => {
-    fetchFavoriteDogs()
-    // }
-  }, [favoriteDogs])
+    if (favoriteDogsIds.length > 0) {
+      fetchFavoriteDogs()
+    }
+  }, [favoriteDogsIds])
 
   const fetchDogBreeds = async () => {
     try {
-      const response = await axios.get(
-        "https://frontend-take-home-service.fetch.com/dogs/breeds",
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
+      let response: AxiosResponse<any, any> | undefined = await apiHelper({
+        endpoint: "dogs/breeds",
+        method: "GET",
+      })
+      if (response) {
+        if (response.status === 200) {
+          return response.data
+        } else {
+          console.error("Couldn't fetch dog breeds")
         }
-      )
-
-      if (!response.status) {
-        throw new Error("Fetch request failed!")
-      } else {
-        return response.data
       }
     } catch (error) {
-      console.error("Error during fetch request!", error)
-      throw error
+      console.error("Couldn't fetch dog breeds", error)
     }
   }
 
   useEffect(() => {
-    fetchDogBreeds()
-  }, [])
+    if (filteredDogs.length > 0) {
+      fetchDogBreeds()
+    }
+  }, [filteredDogs])
 
   const addToFavorites = (id: string) => {
-    if (!favoriteDogs.includes(id)) {
-      setFavoriteDogs([...favoriteDogs, id])
+    if (!favoriteDogsIds.includes(id)) {
+      setFavoriteDogsIds([...favoriteDogsIds, id])
     }
   }
 
   const removeFromFavorites = (id: string) => {
-    const result = favoriteDogs.filter((dogId) => dogId !== id)
-    console.log("result", result)
+    const result = favoriteDogsIds.filter((dogId) => dogId !== id)
 
-    setFavoriteDogs(result)
+    setFavoriteDogsIds(result)
 
-    // fetchFavoriteDogs()
+    if (result.length === 0) {
+      fetchFavoriteDogs()
+    }
   }
 
   const fetchNextPage = async () => {
     try {
-      const response = await axios.get(
-        `https://frontend-take-home-service.fetch.com${nextParams}`,
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
-        }
-      )
+      // const response = await axios.get(
+      //   `https://frontend-take-home-service.fetch.com${nextParams}`,
+      //   {
+      //     withCredentials: true,
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //       "Access-Control-Allow-Origin": "*",
+      //     },
+      //   }
+      // )
+      const response: AxiosResponse<any, any> | undefined = await apiHelper({
+        endpoint: nextParams,
+        method: "GET",
+      })
+      if (response) {
+        if (response.status) {
+          await fetchDogObjects(response.data.resultIds)
 
-      if (response.status) {
-        fetchDogObjects(response.data.resultIds)
-
-        if (response.data.next) {
-          setNextParams(response.data.next)
-        }
-        if (response.data.prev) {
-          setPrevParams(response.data.prev)
+          if (response.data.next) {
+            setNextParams(response.data.next)
+          }
+          if (response.data.prev) {
+            setPrevParams(response.data.prev)
+          }
         }
       }
     } catch (error) {
@@ -217,24 +233,29 @@ const SearchPage = () => {
 
   const fetchPrevPage = async () => {
     try {
-      const response = await axios.get(
-        `https://frontend-take-home-service.fetch.com${prevParams}`,
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      )
+      //   const response = await axios.get(
+      //     `https://frontend-take-home-service.fetch.com${prevParams}`,
+      //     {
+      //       withCredentials: true,
+      //       headers: {
+      //         "Content-Type": "application/json",
+      //       },
+      //     }
+      //   )
+      const response: AxiosResponse<any, any> | undefined = await apiHelper({
+        endpoint: prevParams,
+        method: "GET",
+      })
+      if (response) {
+        if (response.status === 200) {
+          fetchDogObjects(response.data.resultIds)
 
-      if (response.status) {
-        fetchDogObjects(response.data.resultIds)
-
-        if (response.data.next) {
-          setNextParams(response.data.next)
-        }
-        if (response.data.prev) {
-          setPrevParams(response.data.prev)
+          if (response.data.next) {
+            setNextParams(response.data.next)
+          }
+          if (response.data.prev) {
+            setPrevParams(response.data.prev)
+          }
         }
       }
     } catch (error) {
@@ -264,7 +285,7 @@ const SearchPage = () => {
           },
         }
       )
-      if (response.status) {
+      if (response.status === 200) {
         setFilteredDogs(response.data)
         getLocations(response.data)
       }
@@ -286,7 +307,6 @@ const SearchPage = () => {
         }
       )
       if (response.status) {
-        console.log("response.data[]", response.data)
         getMatchedLocation(response.data[0])
         setMatchedDog(response.data[0])
       }
@@ -350,91 +370,90 @@ const SearchPage = () => {
 
     //there was a CORS issue when sending an array of multiple zip codes so I had to take this functionality out.
 
-    // if (citySearch || stateSearch) {
-    //   let filteredZips: string[] = await handleSearchByLocation()
+    if (citySearch || stateSearch) {
+      try {
+        let filteredZips: string[] | undefined = await handleSearchByLocation()
 
-    //   params.zipCodes = filteredZips
-    //   // params.zipCodes = ["60601"]
+        params.zipCodes = filteredZips
 
-    //   console.log("filteredZips", filteredZips)
-    //   await fetchLocations(filteredZips)
-    //   // setZipCodeArr(filteredZips)
-    // }
+        if (filteredZips) {
+          await fetchLocations(filteredZips)
+        }
+      } catch (error) {
+        console.error("Couldn't fetch locations", error)
+      }
+    }
 
     try {
-      const response = await axios.get(
-        "https://frontend-take-home-service.fetch.com/dogs/search",
+      const response: AxiosResponse<any, any> | undefined = await apiHelper({
+        endpoint: "dogs/search",
+        method: "GET",
+        params: params,
+      })
+
+      if (response) {
+        if (response.status === 200) {
+          setTotal(response.data.total)
+          setNextParams(response.data.next)
+          fetchDogObjects(response.data.resultIds)
+          if (response.data.total === 0) {
+            setErrorMessage("No Dogs Found :(")
+          }
+          if (response.data.total > 0) {
+            setErrorMessage("")
+          }
+        }
+
+        if (!response.status) {
+          throw new Error("Fetch request failed!")
+        }
+      }
+    } catch (error) {
+      console.error("Error during search fetch!", error)
+    }
+  }
+
+  const handleSearchByLocation = async () => {
+    const params: DogLocationSearch = {
+      size: 10000,
+      from: currentPage * 25,
+    }
+
+    if (citySearch) {
+      params.city = citySearch
+    }
+    if (stateSearch) {
+      params.states = [stateSearch]
+    }
+
+    try {
+      const locationResponse = await axios.post(
+        "https://frontend-take-home-service.fetch.com/locations/search",
+        params,
         {
           withCredentials: true,
           headers: {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
           },
-          params,
         }
       )
 
-      if (response.status) {
-        setTotal(response.data.total)
-        setNextParams(response.data.next)
-        fetchDogObjects(response.data.resultIds)
-        if (response.data.total === 0) {
-          setErrorMessage("No Dogs Found :(")
-        }
-        if (response.data.total > 0) {
-          setErrorMessage("")
-        }
-      }
+      if (locationResponse.status) {
+        console.log("locationResponse", locationResponse)
+        let zipCodes: string[] = locationResponse.data.results.map(
+          (location: Location) => location.zip_code
+        )
+        // setZipCodeArr(zipCodes)
+        console.log("zipCodes", zipCodes)
 
-      if (!response.status) {
-        throw new Error("Fetch request failed!")
+        // setZipSearch(zipCodes)
+        return zipCodes
       }
     } catch (error) {
-      console.log("Error during search fetch!")
+      console.error("Error during location search!")
     }
   }
-
-  // const handleSearchByLocation = async () => {
-  //   const params: DogLocationSearch = {
-  //     size: 10000,
-  //     from: currentPage * 25,
-  //   }
-
-  //   if (citySearch) {
-  //     params.city = citySearch
-  //   }
-  //   if (stateSearch) {
-  //     params.states = [stateSearch]
-  //   }
-
-  //   try {
-  //     const locationResponse = await axios.post(
-  //       "https://frontend-take-home-service.fetch.com/locations/search",
-  //       params,
-  //       {
-  //         withCredentials: true,
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           "Access-Control-Allow-Origin": "*"
-  //         },
-  //       }
-  //     )
-
-  //     if (locationResponse.status) {
-  //       console.log("locationResponse", locationResponse)
-  //       let zipCodes: string[] = locationResponse.data.results.map(
-  //         (location: Location) => location.zip_code
-  //       )
-  //       // setZipCodeArr(zipCodes)
-  //       console.log("zipCodes", zipCodes)
-
-  //       // setZipSearch(zipCodes)
-  //       return zipCodes
-  //     }
-  //   } catch (error) {
-  //     console.error("Error during location search!")
-  //   }
-  // }
 
   const fetchLocations = async (zipCodes: string[]) => {
     try {
@@ -566,11 +585,11 @@ const SearchPage = () => {
       )}
       {favoriteDogObjects.length > 0 && (
         <div className="min-w-[300px] w-[95%] mx-auto flex flex-col pb-6 items-center">
-          <hr className="w-[80%] border-black"></hr>
+          {/* <hr className="w-[80%] border-black"></hr> */}
           <h2 className="text-[1.5rem] mt-4">Your Favorite Dogs!</h2>
           <button
             className="border-2 my-2 px-4 mx-auto border-black"
-            onClick={() => findDogMatch(favoriteDogs)}
+            onClick={() => findDogMatch(favoriteDogsIds)}
           >
             Find Your Match!
           </button>
