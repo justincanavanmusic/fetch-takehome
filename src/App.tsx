@@ -1,9 +1,10 @@
 import SearchPage from "./components/SearchPage"
 import LoginForm from "./components/LoginForm"
 import { Routes, Route, BrowserRouter as Router } from "react-router-dom"
+import React from "react"
 
 
-function App() {
+function App(): React.ReactElement {
   return (
     <Router>
       <>

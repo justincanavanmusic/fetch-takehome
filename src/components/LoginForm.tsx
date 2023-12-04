@@ -1,9 +1,9 @@
-import { useState } from "react"
+import React, { useState } from "react"
 import axios from "axios"
 import { AxiosResponse } from "axios"
 import { useNavigate } from "react-router-dom"
 
-const LoginForm = () => {
+const LoginForm: React.FC = () => {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const navigate = useNavigate()

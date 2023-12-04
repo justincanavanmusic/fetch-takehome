@@ -13,9 +13,9 @@ import { useFetch } from "../useFetch"
 import { apiHelper } from "./utils/apiHelper"
 import { AxiosResponse } from "axios"
 
-//NOTE: there was a CORS issue when sending an array of multiple zip codes so I took out the location filtering as it was only working for the first page (25 dogs). Once I used the "next" end point I is when I receieved the CORS errors.
+//NOTE: there was a CORS issue when sending an array of multiple zip codes so I took out the location filtering as it was only working for the first page (25 dogs). Once I used the "next" end point that was supplied is when I receieved the CORS errors.
 
-const SearchPage = () => {
+const SearchPage: React.FC = () => {
   const [breedSearch, setBreedSearch] = useState<string>("")
   const [zipSearch, setZipSearch] = useState<string>("")
   const [ageMin, setAgeMin] = useState<number | string>("")
@@ -477,8 +477,6 @@ const SearchPage = () => {
 
   return (
     <div className="flex flex-col gap-2 mt-4 ">
-      {/* <button onClick={handleSearchBy}>{searchBy}</button>
-      {!searchByLocation ? ( */}
       <div className="flex flex-col items-start">
         <h1 className="pl-4 text-[1.5rem]">Search for Dogs!</h1>
         <LogOut />
@@ -550,7 +548,9 @@ const SearchPage = () => {
                 Search
               </button>
             </div>
-            <hr className="w-[80%] mt-4 border-black "></hr>
+            {favoriteDogs.length === 0 && (
+              <hr className="w-[80%] mt-4 border-black "></hr>
+            )}
           </div>
         </>
       </div>
@@ -562,13 +562,13 @@ const SearchPage = () => {
           key={matchedDog.id}
           className="flex flex-col items-center py-4 w-full"
         >
+          <hr className="w-[80%] mt-4 mb-2 border-black "></hr>
           <h1 className="text-[1.5rem] mb-4">Your Match!</h1>
           <div className="flex flex-col border-2 py-2 border-black items-center w-64 xs:w-[350px] sm:w-[500px] rounded-md xs:text-[1.2rem] sm:text-[1.5rem] sm:flex-row sm:justify-between sm:items-start px-2">
             <div className="flex flex-col">
               <span>Name: {matchedDog.name}</span>
               <span>Breed: {matchedDog.breed}</span>
               <span>Age: {matchedDog.age}</span>
-              {/* <span>Zip Code: {matchedDog.zip_code}</span> */}
               {matchedLocationData && (
                 <span>
                   {`${matchedLocationData.city}, ${matchedLocationData.state}, ${matchedLocationData.zip_code}`}
@@ -634,26 +634,6 @@ const SearchPage = () => {
         </div>
       )}
 
-      {/* <div>
-        <input
-          type="text"
-          placeholder="City"
-          value={citySearch}
-          onChange={(e) => setCitySearch(e.target.value)}
-        />
-        <select
-          placeholder="State"
-          value={stateSearch}
-          onChange={(e) => setStateSearch(e.target.value)}
-        >
-          {fiftyStates.map((state) => (
-            <option key={state} value={state}>
-              {state}
-            </option>
-          ))}
-        </select>
-      </div> */}
-
       {filteredDogs.length > 0 && (
         <div className="flex gap-4 justify-center flex-wrap">
           <h2 className="w-full text-center text-[1.5rem]"> View All Dogs!</h2>
@@ -690,7 +670,6 @@ const SearchPage = () => {
               </div>
             </div>
           ))}
-          {/* {filteredDogs.length>0 && ( */}
           <div className="w-full flex justify-evenly mb-2">
             <button
               className="border-2 px-1 border-black"
@@ -716,7 +695,6 @@ const SearchPage = () => {
               Next page
             </button>
           </div>
-          {/* )} */}
         </div>
       )}
     </div>
