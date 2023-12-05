@@ -1,6 +1,4 @@
-import axios from "axios"
 import { useEffect, useState } from "react"
-
 import type {
   DogSearch,
   Dog,
@@ -9,9 +7,10 @@ import type {
 } from "../types/types"
 import LogOut from "./Logout"
 import { fiftyStates } from "../fiftyStates"
-import { useFetch } from "../useFetch"
 import { apiHelper } from "./utils/apiHelper"
 import { AxiosResponse } from "axios"
+import { responseCheck } from "./utils/responseCheck"
+import { fetchNextPage, fetchPrevPage } from "./api/paginationFns"
 
 //NOTE: there was a CORS issue when sending an array of multiple zip codes so I took out the location filtering as it was only working for the first page (25 dogs). Once I used the "next" end point that was supplied is when I receieved the CORS errors.
 
@@ -56,6 +55,49 @@ const SearchPage: React.FC = () => {
 
   let zipCodes: string[] = []
   let favZipCodes: string[] = []
+
+  const fetchNext = async (nextParams: string) => {
+    let response: AxiosResponse<any, any> | undefined =
+      await fetchNextPage(nextParams)
+    if (response) {
+      const isResponse200 = responseCheck(response)
+      if (isResponse200) {
+        try {
+          await fetchDogObjects(response.data.resultIds)
+        } catch (error) {
+          console.error(`Couldn't fetch dog objects`, error)
+        }
+        if (response.data.next) {
+          setNextParams(response.data.next)
+        }
+        if (response.data.prev) {
+          setPrevParams(response.data.prev)
+        }
+      }
+    }
+  }
+
+  const fetchPrev = async (prevParams: string) => {
+    let response: AxiosResponse<any, any> | undefined =
+      await fetchPrevPage(prevParams)
+    if (response) {
+      const isResponse200 = responseCheck(response)
+      if (isResponse200) {
+        try {
+          await fetchDogObjects(response.data.resultIds)
+        } catch (error) {
+          console.error(`Couldn't fetch dog objects`, error)
+        }
+
+        if (response.data.next) {
+          setNextParams(response.data.next)
+        }
+        if (response.data.prev) {
+          setPrevParams(response.data.prev)
+        }
+      }
+    }
+  }
 
   const getLocations = (dogArr: Dog[]) => {
     dogArr.map((dog) => {
@@ -127,19 +169,19 @@ const SearchPage: React.FC = () => {
 
   const fetchFavDogObjects = async (ids: string[]) => {
     try {
-      const response = await axios.post(
-        "https://frontend-take-home-service.fetch.com/dogs",
-        ids,
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response: AxiosResponse<any, any> | undefined = await apiHelper({
+        endpoint: "dogs",
+        method: "POST",
+        params: "",
+        body: ids,
+      })
+
+      if (response) {
+        const isResponse200 = responseCheck(response)
+        if (isResponse200) {
+          getFavLocations(response.data)
+          return response.data
         }
-      )
-      if (response.status) {
-        getFavLocations(response.data)
-        return response.data
       }
     } catch (error) {
       console.error("Error during favorite dog fetch", error)
@@ -197,72 +239,58 @@ const SearchPage: React.FC = () => {
     }
   }
 
-  const fetchNextPage = async () => {
-    try {
-      // const response = await axios.get(
-      //   `https://frontend-take-home-service.fetch.com${nextParams}`,
-      //   {
-      //     withCredentials: true,
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //       "Access-Control-Allow-Origin": "*",
-      //     },
-      //   }
-      // )
-      const response: AxiosResponse<any, any> | undefined = await apiHelper({
-        endpoint: nextParams,
-        method: "GET",
-      })
-      if (response) {
-        if (response.status) {
-          await fetchDogObjects(response.data.resultIds)
+  // const fetchNextPage = async () => {
+  //   try {
+  //     const response: AxiosResponse<any, any> | undefined = await apiHelper({
+  //       endpoint: nextParams,
+  //       method: "GET",
+  //     })
+  //     if (response) {
+  //       const isResponse200 = responseCheck(response)
+  //       if (isResponse200) {
+  //         try {
+  //           await fetchDogObjects(response.data.resultIds)
+  //         } catch (error) {
+  //           console.error(`Couldn't fetch dog objects`, error)
+  //         }
 
-          if (response.data.next) {
-            setNextParams(response.data.next)
-          }
-          if (response.data.prev) {
-            setPrevParams(response.data.prev)
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error during fetch request!", error)
-      throw error
-    }
-  }
+  //         if (response.data.next) {
+  //           setNextParams(response.data.next)
+  //         }
+  //         if (response.data.prev) {
+  //           setPrevParams(response.data.prev)
+  //         }
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("Error during fetch request!", error)
+  //     throw error
+  //   }
+  // }
 
-  const fetchPrevPage = async () => {
-    try {
-      //   const response = await axios.get(
-      //     `https://frontend-take-home-service.fetch.com${prevParams}`,
-      //     {
-      //       withCredentials: true,
-      //       headers: {
-      //         "Content-Type": "application/json",
-      //       },
-      //     }
-      //   )
-      const response: AxiosResponse<any, any> | undefined = await apiHelper({
-        endpoint: prevParams,
-        method: "GET",
-      })
-      if (response) {
-        if (response.status === 200) {
-          fetchDogObjects(response.data.resultIds)
+  // const fetchPrevPage = async () => {
+  //   try {
+  //     const response: AxiosResponse<any, any> | undefined = await apiHelper({
+  //       endpoint: prevParams,
+  //       method: "GET",
+  //     })
+  //     if (response) {
+  //       if (response.status === 200) {
+  //         fetchDogObjects(response.data.resultIds)
 
-          if (response.data.next) {
-            setNextParams(response.data.next)
-          }
-          if (response.data.prev) {
-            setPrevParams(response.data.prev)
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error during fetch request!", error)
-      throw error
-    }
-  }
+  //         if (response.data.next) {
+  //           setNextParams(response.data.next)
+  //         }
+  //         if (response.data.prev) {
+  //           setPrevParams(response.data.prev)
+  //         }
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("Error during fetch request!", error)
+  //     throw error
+  //   }
+  // }
 
   const fetchDogObjects = async (ids: string[]) => {
     let idsArr: string[]
@@ -272,63 +300,58 @@ const SearchPage: React.FC = () => {
     } else {
       idsArr = ids
     }
-
     try {
-      const response = await axios.post(
-        "https://frontend-take-home-service.fetch.com/dogs",
-
-        idsArr,
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response: AxiosResponse<any, any> | undefined = await apiHelper({
+        endpoint: "dogs",
+        method: "POST",
+        params: "",
+        body: idsArr,
+      })
+      if (response) {
+        const isResponse200 = responseCheck(response)
+        if (isResponse200) {
+          setFilteredDogs(response.data)
+          getLocations(response.data)
         }
-      )
-      if (response.status === 200) {
-        setFilteredDogs(response.data)
-        getLocations(response.data)
       }
     } catch (error) {
-      console.error("Error during fetch request!", error)
+      console.log("Couldn't fetch dog objects", error)
     }
   }
 
   const fetchMatchedDog = async (id: string[]) => {
     try {
-      const response = await axios.post(
-        "https://frontend-take-home-service.fetch.com/dogs",
-        id,
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response: AxiosResponse<any, any> | undefined = await apiHelper({
+        endpoint: "dogs",
+        method: "POST",
+        params: "",
+        body: id,
+      })
+      if (response) {
+        const isResponse200: boolean = responseCheck(response)
+        if (isResponse200) {
+          getMatchedLocation(response.data[0])
+          setMatchedDog(response.data[0])
         }
-      )
-      if (response.status) {
-        getMatchedLocation(response.data[0])
-        setMatchedDog(response.data[0])
       }
     } catch (error) {
-      console.error("Error fetching matched dog!", error)
+      console.error("Error fetching matched dog", error)
     }
   }
 
   const findDogMatch = async (dogIds: string[]) => {
     try {
-      const response = await axios.post(
-        "https://frontend-take-home-service.fetch.com/dogs/match",
-        dogIds,
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response: AxiosResponse<any, any> | undefined = await apiHelper({
+        endpoint: "dogs/match",
+        method: "POST",
+        params: "",
+        body: dogIds,
+      })
+      if (response) {
+        const isResponse200 = responseCheck(response)
+        if (isResponse200) {
+          fetchMatchedDog([response.data.match])
         }
-      )
-      if (response.status) {
-        fetchMatchedDog([response.data.match])
       }
     } catch (error) {
       console.error("Error fetching dog matches!", error)
@@ -413,7 +436,9 @@ const SearchPage: React.FC = () => {
     }
   }
 
-  const handleSearchByLocation = async () => {
+  const handleSearchByLocation: () => Promise<
+    string[] | undefined
+  > = async () => {
     const params: DogLocationSearch = {
       size: 10000,
       from: currentPage * 25,
@@ -427,28 +452,21 @@ const SearchPage: React.FC = () => {
     }
 
     try {
-      const locationResponse = await axios.post(
-        "https://frontend-take-home-service.fetch.com/locations/search",
-        params,
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
+      const response: AxiosResponse<any, any> | undefined = await apiHelper({
+        endpoint: "locations/search",
+        method: "POST",
+        params: "",
+        body: params,
+      })
+      if (response) {
+        const isResponse200: boolean = responseCheck(response)
+        if (isResponse200) {
+          let zipCodes: string[] = response.data.results.map(
+            (location: Location) => location.zip_code
+          )
+
+          return zipCodes
         }
-      )
-
-      if (locationResponse.status) {
-        console.log("locationResponse", locationResponse)
-        let zipCodes: string[] = locationResponse.data.results.map(
-          (location: Location) => location.zip_code
-        )
-        // setZipCodeArr(zipCodes)
-        console.log("zipCodes", zipCodes)
-
-        // setZipSearch(zipCodes)
-        return zipCodes
       }
     } catch (error) {
       console.error("Error during location search!")
@@ -457,18 +475,18 @@ const SearchPage: React.FC = () => {
 
   const fetchLocations = async (zipCodes: string[]) => {
     try {
-      const locationResponse = await axios.post(
-        "https://frontend-take-home-service.fetch.com/locations",
-        zipCodes,
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response: AxiosResponse<any, any> | undefined = await apiHelper({
+        endpoint: "locations",
+        method: "POST",
+        params: "",
+        body: zipCodes,
+      })
+
+      if (response) {
+        const isResponse200: boolean = responseCheck(response)
+        if (isResponse200) {
+          return response.data
         }
-      )
-      if (locationResponse.status) {
-        return locationResponse.data
       }
     } catch (error) {
       console.error("Error fetching locations!", error)
@@ -490,13 +508,13 @@ const SearchPage: React.FC = () => {
               value={breedSearch}
               onChange={(e) => setBreedSearch(e.target.value)}
             />
-            {/* <input
-            className="border-2 border-black"
-            type="text"
-            placeholder="City"
-            value={citySearch}
-            onChange={(e) => setCitySearch(e.target.value)}
-          /> */}
+            <input
+              className="border-2 border-black"
+              type="text"
+              placeholder="City"
+              value={citySearch}
+              onChange={(e) => setCitySearch(e.target.value)}
+            />
             <input
               className="border-2 border-black"
               type="text"
@@ -504,18 +522,18 @@ const SearchPage: React.FC = () => {
               value={zipSearch}
               onChange={(e) => setZipSearch(e.target.value)}
             />
-            {/* <select
-            className="border-2 border-black"
-            placeholder="State"
-            value={stateSearch}
-            onChange={(e) => setStateSearch(e.target.value)}
-          >
-            {fiftyStates.map((state) => (
-              <option key={state} value={state}>
-                {state}
-              </option>
-            ))}
-          </select> */}
+            <select
+              className="border-2 border-black"
+              placeholder="State"
+              value={stateSearch}
+              onChange={(e) => setStateSearch(e.target.value)}
+            >
+              {fiftyStates.map((state) => (
+                <option key={state} value={state}>
+                  {state}
+                </option>
+              ))}
+            </select>
             <input
               className="border-2 border-black"
               type="text"
@@ -548,7 +566,7 @@ const SearchPage: React.FC = () => {
                 Search
               </button>
             </div>
-            {favoriteDogs.length === 0 && (
+            {favoriteDogsIds.length === 0 && (
               <hr className="w-[80%] mt-4 border-black "></hr>
             )}
           </div>
@@ -675,7 +693,8 @@ const SearchPage: React.FC = () => {
               className="border-2 px-1 border-black"
               onClick={() => {
                 setCurrentPage(currentPage - 1)
-                fetchPrevPage()
+                fetchPrev(prevParams)
+                // fetchPrevPage()
               }}
               disabled={currentPage <= 0}
             >
@@ -688,7 +707,7 @@ const SearchPage: React.FC = () => {
               className="border-2 px-1 border-black"
               onClick={() => {
                 setCurrentPage(currentPage + 1)
-                fetchNextPage()
+                fetchNext(nextParams)
               }}
               disabled={currentPage >= totalPages - 1}
             >
