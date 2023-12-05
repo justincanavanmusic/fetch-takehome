@@ -7,11 +7,18 @@ import type {
 } from "../types/types"
 import LogOut from "./Logout"
 import { fiftyStates } from "../fiftyStates"
-import { apiHelper } from "./utils/apiHelper"
 import { AxiosResponse } from "axios"
 import { responseCheck } from "./utils/responseCheck"
 import { fetchNextPage, fetchPrevPage } from "./api/paginationFns"
-
+import { handleChoiceSelection } from "./utils/handleChoice"
+import { fetchFavDogObjs } from "./api/fetchFavData"
+import { fetchDogBreeds } from "./api/fetchBreeds"
+import { fetchDogObjs } from "./api/fetchDogObjs"
+import { fetchMatch } from "./api/fetchMatchedDog"
+import { findMatch } from "./api/findMatch"
+import { search } from "./api/search"
+import { fetchLocationData } from "./api/getLocations"
+import { searchByLocation } from "./api/searchByLocation"
 //NOTE: there was a CORS issue when sending an array of multiple zip codes so I took out the location filtering as it was only working for the first page (25 dogs). Once I used the "next" end point that was supplied is when I receieved the CORS errors.
 
 const SearchPage: React.FC = () => {
@@ -56,6 +63,8 @@ const SearchPage: React.FC = () => {
   let zipCodes: string[] = []
   let favZipCodes: string[] = []
 
+  //pagination functions
+
   const fetchNext = async (nextParams: string) => {
     let response: AxiosResponse<any, any> | undefined =
       await fetchNextPage(nextParams)
@@ -78,7 +87,7 @@ const SearchPage: React.FC = () => {
   }
 
   const fetchPrev = async (prevParams: string) => {
-    let response: AxiosResponse<any, any> | undefined =
+    const response: AxiosResponse<any, any> | undefined =
       await fetchPrevPage(prevParams)
     if (response) {
       const isResponse200 = responseCheck(response)
@@ -99,6 +108,8 @@ const SearchPage: React.FC = () => {
     }
   }
 
+  //location functions
+
   const getLocations = (dogArr: Dog[]) => {
     dogArr.map((dog) => {
       zipCodes.push(dog.zip_code)
@@ -117,20 +128,7 @@ const SearchPage: React.FC = () => {
     setMatchedZipCode(dog.zip_code)
   }
 
-  const handleLocationData = async () => {
-    let locations = await fetchLocations(zipCodeArr)
-    setLocationArr(locations)
-  }
-
-  const handleFavLocationData = async () => {
-    let locations = await fetchLocations(favZipCodeArr)
-    setFavLocationArr(locations)
-  }
-
-  const handleMatchedLocationData = async () => {
-    let location = await fetchLocations([matchedZipCode])
-    setMatchedLocationData(location[0])
-  }
+  //fetch locations
 
   useEffect(() => {
     if (zipCodeArr.length > 0) {
@@ -155,42 +153,48 @@ const SearchPage: React.FC = () => {
     }
   }, [matchedZipCode])
 
-  const handleChoiceSelection = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (e.target.value === "asc") {
-      setSortChoice("asc")
-    }
-    if (e.target.value === "desc") {
-      setSortChoice("desc")
-    }
-    if (e.target.value === "none") {
-      setSortChoice("")
-    }
+  const handleLocationData = async () => {
+    let locations = await fetchLocations(zipCodeArr)
+    setLocationArr(locations)
   }
 
-  const fetchFavDogObjects = async (ids: string[]) => {
-    try {
-      const response: AxiosResponse<any, any> | undefined = await apiHelper({
-        endpoint: "dogs",
-        method: "POST",
-        params: "",
-        body: ids,
-      })
+  const handleFavLocationData = async () => {
+    let locations = await fetchLocations(favZipCodeArr)
+    setFavLocationArr(locations)
+  }
 
-      if (response) {
-        const isResponse200 = responseCheck(response)
-        if (isResponse200) {
-          getFavLocations(response.data)
-          return response.data
-        }
+  const handleMatchedLocationData = async () => {
+    let location = await fetchLocations([matchedZipCode])
+    setMatchedLocationData(location[0])
+  }
+
+  const handleChoice = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    let choiceSelection = handleChoiceSelection(e)
+    choiceSelection && setSortChoice(choiceSelection)
+  }
+
+  // fav dog fns
+
+  const fetchFavDogObjects = async (ids: string[]) => {
+    const response: AxiosResponse<any, any> | undefined =
+      await fetchFavDogObjs(ids)
+
+    if (response) {
+      const isResponse200 = responseCheck(response)
+      if (isResponse200) {
+        getFavLocations(response.data)
+        return response.data
       }
-    } catch (error) {
-      console.error("Error during favorite dog fetch", error)
     }
   }
 
   const fetchFavoriteDogs = async () => {
-    let dogObjs = await fetchFavDogObjects(favoriteDogsIds)
-    setFavoriteDogObjects(dogObjs)
+    try {
+      let dogObjs = await fetchFavDogObjects(favoriteDogsIds)
+      setFavoriteDogObjects(dogObjs)
+    } catch (error) {
+      console.error("Couldn't fetch favorite dog objects", error)
+    }
   }
 
   useEffect(() => {
@@ -198,24 +202,6 @@ const SearchPage: React.FC = () => {
       fetchFavoriteDogs()
     }
   }, [favoriteDogsIds])
-
-  const fetchDogBreeds = async () => {
-    try {
-      let response: AxiosResponse<any, any> | undefined = await apiHelper({
-        endpoint: "dogs/breeds",
-        method: "GET",
-      })
-      if (response) {
-        if (response.status === 200) {
-          return response.data
-        } else {
-          console.error("Couldn't fetch dog breeds")
-        }
-      }
-    } catch (error) {
-      console.error("Couldn't fetch dog breeds", error)
-    }
-  }
 
   useEffect(() => {
     if (filteredDogs.length > 0) {
@@ -239,122 +225,37 @@ const SearchPage: React.FC = () => {
     }
   }
 
-  // const fetchNextPage = async () => {
-  //   try {
-  //     const response: AxiosResponse<any, any> | undefined = await apiHelper({
-  //       endpoint: nextParams,
-  //       method: "GET",
-  //     })
-  //     if (response) {
-  //       const isResponse200 = responseCheck(response)
-  //       if (isResponse200) {
-  //         try {
-  //           await fetchDogObjects(response.data.resultIds)
-  //         } catch (error) {
-  //           console.error(`Couldn't fetch dog objects`, error)
-  //         }
-
-  //         if (response.data.next) {
-  //           setNextParams(response.data.next)
-  //         }
-  //         if (response.data.prev) {
-  //           setPrevParams(response.data.prev)
-  //         }
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("Error during fetch request!", error)
-  //     throw error
-  //   }
-  // }
-
-  // const fetchPrevPage = async () => {
-  //   try {
-  //     const response: AxiosResponse<any, any> | undefined = await apiHelper({
-  //       endpoint: prevParams,
-  //       method: "GET",
-  //     })
-  //     if (response) {
-  //       if (response.status === 200) {
-  //         fetchDogObjects(response.data.resultIds)
-
-  //         if (response.data.next) {
-  //           setNextParams(response.data.next)
-  //         }
-  //         if (response.data.prev) {
-  //           setPrevParams(response.data.prev)
-  //         }
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("Error during fetch request!", error)
-  //     throw error
-  //   }
-  // }
-
   const fetchDogObjects = async (ids: string[]) => {
-    let idsArr: string[]
+    const response = await fetchDogObjs(ids)
 
-    if (ids.length > 100) {
-      idsArr = ids.slice(0, 100)
-    } else {
-      idsArr = ids
-    }
-    try {
-      const response: AxiosResponse<any, any> | undefined = await apiHelper({
-        endpoint: "dogs",
-        method: "POST",
-        params: "",
-        body: idsArr,
-      })
-      if (response) {
-        const isResponse200 = responseCheck(response)
-        if (isResponse200) {
-          setFilteredDogs(response.data)
-          getLocations(response.data)
-        }
+    if (response) {
+      const isResponse200 = responseCheck(response)
+      if (isResponse200) {
+        setFilteredDogs(response.data)
+        getLocations(response.data)
       }
-    } catch (error) {
-      console.log("Couldn't fetch dog objects", error)
     }
   }
 
   const fetchMatchedDog = async (id: string[]) => {
-    try {
-      const response: AxiosResponse<any, any> | undefined = await apiHelper({
-        endpoint: "dogs",
-        method: "POST",
-        params: "",
-        body: id,
-      })
-      if (response) {
-        const isResponse200: boolean = responseCheck(response)
-        if (isResponse200) {
-          getMatchedLocation(response.data[0])
-          setMatchedDog(response.data[0])
-        }
+    const response: AxiosResponse<any, any> | undefined = await fetchMatch(id)
+    if (response) {
+      const isResponse200: boolean = responseCheck(response)
+      if (isResponse200) {
+        getMatchedLocation(response.data[0])
+        setMatchedDog(response.data[0])
       }
-    } catch (error) {
-      console.error("Error fetching matched dog", error)
     }
   }
 
   const findDogMatch = async (dogIds: string[]) => {
-    try {
-      const response: AxiosResponse<any, any> | undefined = await apiHelper({
-        endpoint: "dogs/match",
-        method: "POST",
-        params: "",
-        body: dogIds,
-      })
-      if (response) {
-        const isResponse200 = responseCheck(response)
-        if (isResponse200) {
-          fetchMatchedDog([response.data.match])
-        }
+    const response = await findMatch(dogIds)
+
+    if (response) {
+      const isResponse200 = responseCheck(response)
+      if (isResponse200) {
+        fetchMatchedDog([response.data.match])
       }
-    } catch (error) {
-      console.error("Error fetching dog matches!", error)
     }
   }
 
@@ -395,7 +296,8 @@ const SearchPage: React.FC = () => {
 
     if (citySearch || stateSearch) {
       try {
-        let filteredZips: string[] | undefined = await handleSearchByLocation()
+        const filteredZips: string[] | undefined =
+          await handleSearchByLocation()
 
         params.zipCodes = filteredZips
 
@@ -407,32 +309,25 @@ const SearchPage: React.FC = () => {
       }
     }
 
-    try {
-      const response: AxiosResponse<any, any> | undefined = await apiHelper({
-        endpoint: "dogs/search",
-        method: "GET",
-        params: params,
-      })
+    const response = await search(params)
 
-      if (response) {
-        if (response.status === 200) {
-          setTotal(response.data.total)
-          setNextParams(response.data.next)
-          fetchDogObjects(response.data.resultIds)
-          if (response.data.total === 0) {
-            setErrorMessage("No Dogs Found :(")
-          }
-          if (response.data.total > 0) {
-            setErrorMessage("")
-          }
+    if (response) {
+      const isResponse200 = responseCheck(response)
+      if (isResponse200) {
+        setTotal(response.data.total)
+        setNextParams(response.data.next)
+        fetchDogObjects(response.data.resultIds)
+        if (response.data.total === 0) {
+          setErrorMessage("No Dogs Found :(")
         }
-
-        if (!response.status) {
-          throw new Error("Fetch request failed!")
+        if (response.data.total > 0) {
+          setErrorMessage("")
         }
       }
-    } catch (error) {
-      console.error("Error during search fetch!", error)
+
+      if (!response.status) {
+        throw new Error("Fetch request failed!")
+      }
     }
   }
 
@@ -451,45 +346,28 @@ const SearchPage: React.FC = () => {
       params.states = [stateSearch]
     }
 
-    try {
-      const response: AxiosResponse<any, any> | undefined = await apiHelper({
-        endpoint: "locations/search",
-        method: "POST",
-        params: "",
-        body: params,
-      })
-      if (response) {
-        const isResponse200: boolean = responseCheck(response)
-        if (isResponse200) {
-          let zipCodes: string[] = response.data.results.map(
-            (location: Location) => location.zip_code
-          )
+    const response = await searchByLocation(params)
 
-          return zipCodes
-        }
+    if (response) {
+      const isResponse200: boolean = responseCheck(response)
+      if (isResponse200) {
+        let zipCodes: string[] = response.data.results.map(
+          (location: Location) => location.zip_code
+        )
+
+        return zipCodes
       }
-    } catch (error) {
-      console.error("Error during location search!")
     }
   }
 
   const fetchLocations = async (zipCodes: string[]) => {
-    try {
-      const response: AxiosResponse<any, any> | undefined = await apiHelper({
-        endpoint: "locations",
-        method: "POST",
-        params: "",
-        body: zipCodes,
-      })
+    const response = await fetchLocationData(zipCodes)
 
-      if (response) {
-        const isResponse200: boolean = responseCheck(response)
-        if (isResponse200) {
-          return response.data
-        }
+    if (response) {
+      const isResponse200: boolean = responseCheck(response)
+      if (isResponse200) {
+        return response.data
       }
-    } catch (error) {
-      console.error("Error fetching locations!", error)
     }
   }
 
@@ -552,7 +430,7 @@ const SearchPage: React.FC = () => {
             <select
               data-testid="sortChoiceSelect"
               className="w-36 border-2 border-black"
-              onChange={(e) => handleChoiceSelection(e)}
+              onChange={(e) => handleChoice(e)}
             >
               <option value="none">None</option>
               <option value="asc">Ascending</option>
