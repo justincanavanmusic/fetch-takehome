@@ -5,7 +5,7 @@ function fixEndpoint(endpoint: string) {
 }
 
 function isValidBody(body: unknown) {
-//   console.log(body)
+  //   console.log(body)
   return true
 }
 
@@ -33,15 +33,15 @@ export async function apiHelper({
     const url = baseUrl + fixEndpoint(endpoint)
 
     if (body !== undefined) {
-    //   if (!isValidBody(body)) {
-        options.data = JSON.stringify(body)
-    //   }
+      //   if (!isValidBody(body)) {
+      options.data = JSON.stringify(body)
+      //   }
     }
 
     let response = await axios(url, options)
 
     return response
-  } catch (e) {
-    console.error("apiHelper not working")
+  } catch (error) {
+    console.error("apiHelper not working", error)
   }
 }

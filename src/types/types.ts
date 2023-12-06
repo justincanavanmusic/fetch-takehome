@@ -1,3 +1,5 @@
+import { AxiosResponse } from "axios"
+
 export interface Dog {
     id: string
     img: string
@@ -41,4 +43,40 @@ export type DogLocationSearch = {
 
 export interface Match {
     match: string
+}
+
+export type DogsContextType = {
+    breedSearch: string
+    setBreedSearch: React.Dispatch<React.SetStateAction<string>>
+    citySearch: string
+    setCitySearch: React.Dispatch<React.SetStateAction<string>>
+    zipSearch: string
+    setZipSearch: React.Dispatch<React.SetStateAction<string>>
+    stateSearch: string
+    setStateSearch: React.Dispatch<React.SetStateAction<string>>
+    ageMin: string | number
+    setAgeMin: React.Dispatch<React.SetStateAction<string | number>>
+    ageMax: string | number
+    setAgeMax: React.Dispatch<React.SetStateAction<string | number>>
+    favoriteDogsIds: string[]
+    setFavoriteDogsIds: React.Dispatch<React.SetStateAction<string[]>>
+    favoriteDogObjects: Dog[]
+    favLocationArr: Location[]
+    setMatchedDog: React.Dispatch<React.SetStateAction<Dog>>
+    setMatchedZipCode: React.Dispatch<React.SetStateAction<string>>
+    fetchFavoriteDogs: () => Promise<void>
+    currentPage: number
+    setCurrentPage: React.Dispatch<React.SetStateAction<number>>
+    sortChoice: string
+    setSortChoice: React.Dispatch<React.SetStateAction<string>>
+    setTotal: React.Dispatch<React.SetStateAction<number>>
+    setNextParams: React.Dispatch<React.SetStateAction<string>>
+    setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+    setZipCodeArr: React.Dispatch<React.SetStateAction<string[]>>
+    fetchLocations: (zipCodes: string[]) => Promise<any>
+    fetchDogObjects: (ids: string[]) => Promise<void>
+    searchByLocation: (params: DogLocationSearch) => Promise<AxiosResponse<any, any> | undefined>
+    matchedDog: Dog
+    matchedLocationData: Location
+
 }
