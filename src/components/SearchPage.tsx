@@ -129,7 +129,6 @@ const SearchPage: React.FC = () => {
     setFavLocationArr(locations)
   }
 
-
   // fav dog fns
 
   const fetchFavDogObjects = async (ids: string[]) => {
@@ -145,28 +144,27 @@ const SearchPage: React.FC = () => {
     }
   }
 
-  const fetchFavoriteDogs = async () => {
+  const fetchFavoriteDogs = async (
+    idArr: string[],
+    id?: string
+  ): Promise<void> => {
     try {
-      let dogObjs = await fetchFavDogObjects(favoriteDogsIds)
-      setFavoriteDogObjects(dogObjs)
+      if (id) {
+        let dogIds = [...idArr, id]
+        let dogObjs = await fetchFavDogObjects(dogIds)
+        setFavoriteDogObjects(dogObjs)
+      } else {
+        // let dogIds = [...idArr]
+        let dogObjs = await fetchFavDogObjects(idArr)
+        setFavoriteDogObjects(dogObjs)
+      }
     } catch (error) {
       console.error("Couldn't fetch favorite dog objects", error)
     }
   }
 
-  useEffect(() => {
-    if (favoriteDogsIds.length > 0) {
-      fetchFavoriteDogs()
-    }
-  }, [favoriteDogsIds])
-
-  useEffect(() => {
-    if (filteredDogs.length > 0) {
-      fetchDogBreeds()
-    }
-  }, [filteredDogs])
-
-  const addToFavorites = (id: string) => {
+  const addToFavorites = async (id: string): Promise<void> => {
+    await fetchFavoriteDogs([...favoriteDogsIds], id)
     if (!favoriteDogsIds.includes(id)) {
       setFavoriteDogsIds([...favoriteDogsIds, id])
     }
@@ -178,6 +176,7 @@ const SearchPage: React.FC = () => {
     if (response) {
       const isResponse200: boolean = responseCheck(response)
       if (isResponse200) {
+        await fetchDogBreeds()
         setFilteredDogs(response.data)
         getLocations(response.data)
       }
@@ -231,7 +230,7 @@ const SearchPage: React.FC = () => {
         searchByLocation,
         matchedDog,
         matchedLocationData,
-        setMatchedLocationData
+        setMatchedLocationData,
       }}
     >
       <div className="flex flex-col gap-2 mt-4 ">

@@ -6,17 +6,6 @@ import { fetchMatch } from "./api/fetchMatchedDog"
 import { useContext } from "react"
 import { DogsContext } from "./context/DogContext"
 
-
-// type FavoriteDogProps = {
-//   favoriteDogsIds: string[]
-//   favoriteDogObjects: Dog[]
-//   favLocationArr: Location[]
-//   setMatchedDog: React.Dispatch<React.SetStateAction<Dog>>
-//   setMatchedZipCode: React.Dispatch<React.SetStateAction<string>>
-//   setFavoriteDogsIds: React.Dispatch<React.SetStateAction<string[]>>
-//   fetchFavoriteDogs: () => Promise<void>
-// }
-
 const FavoriteDogs: React.FC = () => {
   const {
     favoriteDogsIds,
@@ -27,11 +16,10 @@ const FavoriteDogs: React.FC = () => {
     setFavoriteDogsIds,
     fetchFavoriteDogs,
     setMatchedLocationData,
-    fetchLocations
-  
+    fetchLocations,
   } = useContext(DogsContext)
 
-  const handleMatchedLocationData = async (dog:Dog) => {
+  const handleMatchedLocationData = async (dog: Dog) => {
     let location = await fetchLocations([dog.zip_code])
     setMatchedLocationData(location[0])
   }
@@ -65,11 +53,9 @@ const FavoriteDogs: React.FC = () => {
   const removeFromFavorites = (id: string) => {
     const result = favoriteDogsIds.filter((dogId: string) => dogId !== id)
 
-    setFavoriteDogsIds(result)
+    fetchFavoriteDogs(result)
 
-    if (result.length === 0) {
-      fetchFavoriteDogs()
-    }
+    setFavoriteDogsIds(result)
   }
 
   return (
