@@ -63,6 +63,7 @@ export type DogsContextType = {
     favoriteDogObjects: Dog[]
     favLocationArr: Location[]
     setMatchedDog: React.Dispatch<React.SetStateAction<Dog>>
+    matchedZipCode: string
     setMatchedZipCode: React.Dispatch<React.SetStateAction<string>>
     fetchFavoriteDogs: () => Promise<void>
     currentPage: number
@@ -78,5 +79,6 @@ export type DogsContextType = {
     searchByLocation: (params: DogLocationSearch) => Promise<AxiosResponse<any, any> | undefined>
     matchedDog: Dog
     matchedLocationData: Location
+    setMatchedLocationData: React.Dispatch<React.SetStateAction<Location>>
 
 }

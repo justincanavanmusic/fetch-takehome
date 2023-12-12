@@ -6,6 +6,7 @@ import { fetchMatch } from "./api/fetchMatchedDog"
 import { useContext } from "react"
 import { DogsContext } from "./context/DogContext"
 
+
 // type FavoriteDogProps = {
 //   favoriteDogsIds: string[]
 //   favoriteDogObjects: Dog[]
@@ -25,9 +26,18 @@ const FavoriteDogs: React.FC = () => {
     setMatchedZipCode,
     setFavoriteDogsIds,
     fetchFavoriteDogs,
+    setMatchedLocationData,
+    fetchLocations
+  
   } = useContext(DogsContext)
 
+  const handleMatchedLocationData = async (dog:Dog) => {
+    let location = await fetchLocations([dog.zip_code])
+    setMatchedLocationData(location[0])
+  }
+
   const getMatchedLocation = (dog: Dog) => {
+    handleMatchedLocationData(dog)
     setMatchedZipCode(dog.zip_code)
   }
 

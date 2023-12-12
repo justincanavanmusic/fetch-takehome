@@ -165,6 +165,7 @@ const LoginForm: React.FC = () => {
       {emailDisplay &&
         emailMessagesState.map((message, index) => (
           <p
+          key={`message ${index}`}
             className={` ${
               index < emailMessagesState.length - 1 ? "md:mb-3" : ""
             } `}

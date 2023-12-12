@@ -105,55 +105,30 @@ const SearchPage: React.FC = () => {
     dogArr.map((dog) => {
       zipCodes.push(dog.zip_code)
     })
+    handleLocationData(zipCodes)
     setZipCodeArr(zipCodes)
   }
+
+  const handleLocationData = async (zipCodes: string[]) => {
+    let locations = await fetchLocations(zipCodes)
+    setLocationArr(locations)
+  }
+
+  //fav location functions
 
   const getFavLocations = (dogArr: Dog[]) => {
     dogArr.map((dog) => {
       favZipCodes.push(dog.zip_code)
     })
+    handleFavLocationData(favZipCodes)
     setFavZipCodeArr(favZipCodes)
   }
 
-  //fetch locations
-
-  useEffect(() => {
-    if (zipCodeArr.length > 0) {
-      // console.log("handleLocationData")
-      // console.log("zipCodeArr", zipCodeArr)
-      handleLocationData()
-    }
-  }, [zipCodeArr])
-
-  useEffect(() => {
-    if (favZipCodeArr.length > 0) {
-      // console.log("handleFavLocationData")
-      // console.log("favZipCodeArr", favZipCodeArr)
-      handleFavLocationData()
-    }
-  }, [favZipCodeArr])
-
-  useEffect(() => {
-    if (matchedZipCode.length > 0) {
-      // console.log("handleMatchedLocationData")
-      handleMatchedLocationData()
-    }
-  }, [matchedZipCode])
-
-  const handleLocationData = async () => {
-    let locations = await fetchLocations(zipCodeArr)
-    setLocationArr(locations)
-  }
-
-  const handleFavLocationData = async () => {
-    let locations = await fetchLocations(favZipCodeArr)
+  const handleFavLocationData = async (favZipCodes: string[]) => {
+    let locations = await fetchLocations(favZipCodes)
     setFavLocationArr(locations)
   }
 
-  const handleMatchedLocationData = async () => {
-    let location = await fetchLocations([matchedZipCode])
-    setMatchedLocationData(location[0])
-  }
 
   // fav dog fns
 
@@ -240,6 +215,7 @@ const SearchPage: React.FC = () => {
         favoriteDogObjects,
         favLocationArr,
         setMatchedDog,
+        matchedZipCode,
         setMatchedZipCode,
         fetchFavoriteDogs,
         currentPage,
@@ -255,6 +231,7 @@ const SearchPage: React.FC = () => {
         searchByLocation,
         matchedDog,
         matchedLocationData,
+        setMatchedLocationData
       }}
     >
       <div className="flex flex-col gap-2 mt-4 ">
