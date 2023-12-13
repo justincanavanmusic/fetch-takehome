@@ -160,13 +160,13 @@ const SearchInputs = () => {
             value={breedSearch}
             onChange={(e) => setBreedSearch(e.target.value)}
           />
-          <input
+          {/* <input
             className="border-2 border-black"
             type="text"
             placeholder="City"
             value={citySearch}
             onChange={(e) => setCitySearch(e.target.value)}
-          />
+          /> */}
           <input
             className="border-2 border-black"
             type="text"
@@ -174,7 +174,7 @@ const SearchInputs = () => {
             value={zipSearch}
             onChange={(e) => setZipSearch(e.target.value)}
           />
-          <select
+          {/* <select
             className="border-2 border-black"
             placeholder="State"
             value={stateSearch}
@@ -185,7 +185,7 @@ const SearchInputs = () => {
                 {state}
               </option>
             ))}
-          </select>
+          </select> */}
           <input
             className="border-2 border-black"
             type="text"

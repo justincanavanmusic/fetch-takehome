@@ -69,8 +69,12 @@ export type DogsContextType = {
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>
   sortChoice: string
   setSortChoice: React.Dispatch<React.SetStateAction<string>>
+  total: number
   setTotal: React.Dispatch<React.SetStateAction<number>>
+  nextParams: string
   setNextParams: React.Dispatch<React.SetStateAction<string>>
+  prevParams: string
+  setPrevParams: React.Dispatch<React.SetStateAction<string>>
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>
   setZipCodeArr: React.Dispatch<React.SetStateAction<string[]>>
   fetchLocations: (zipCodes: string[]) => Promise<any>
@@ -81,4 +85,8 @@ export type DogsContextType = {
   matchedDog: Dog
   matchedLocationData: Location
   setMatchedLocationData: React.Dispatch<React.SetStateAction<Location>>
+  filteredDogs: Dog[]
+  setFilteredDogs: React.Dispatch<React.SetStateAction<Dog[]>>
+  locationArr: Location[]
+  setLocationArr: React.Dispatch<React.SetStateAction<Location[]>>
 }
